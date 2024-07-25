@@ -131,6 +131,10 @@ const milkyWay = createMilkyWay();
 milkyWay.visible = false; // Ocultarla inicialmente
 scene.add(milkyWay);
 
+// Para transiciones suaves entre la Tierra y la Vía Láctea
+let transitioningToMilkyWay = false;
+let transitioningToEarth = false;
+
 function animate() {
     // Continuar rotando la Tierra
     earth.rotation.y += 0.001;
@@ -144,26 +148,20 @@ function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
 
-        // Transición suave entre la Tierra y la Vía Láctea
-        const distance = camera.position.length();
-        const transitionPoint = 10; // Adjust based on when you want the transition to happen
-        const transitionRange = 5; // Range over which the transition occurs
-    
-        if (distance > transitionPoint) {
-            const t = Math.min((distance - transitionPoint) / transitionRange, 1);
-            earth.material.opacity = 1 - t;
-            earth.visible = earth.material.opacity > 0;
-            stars.material.opacity = 1 - t;
-            stars.visible = stars.material.opacity > 0;
-            milkyWay.visible = true;
-            milkyWay.children.forEach(child => child.material.opacity = t);
-        } else {
-            earth.visible = true;
-            earth.material.opacity = 1;
-            stars.visible = true;
-            stars.material.opacity = 1;
-            milkyWay.visible = false;
-        }
+        
+    // Comprobar la posición de la cámara y realizar la transición
+    const distance = camera.position.length();
+    if (distance > 5 && !transitioningToMilkyWay) {
+        transitioningToMilkyWay = true;
+        transitioningToEarth = false;
+        gsap.to(earth.material, { opacity: 0, duration: 1, ease: "power1.inOut" });
+        gsap.to(milkyWay, { visible: true, duration: 1, ease: "power1.inOut" });
+    } else if (distance <= 5 && !transitioningToEarth) {
+        transitioningToEarth = true;
+        transitioningToMilkyWay = false;
+        gsap.to(earth.material, { opacity: 1, duration: 1, ease: "power1.inOut" });
+        gsap.to(milkyWay, { visible: false, duration: 1, ease: "power1.inOut" });
+    }
 }
 
 
