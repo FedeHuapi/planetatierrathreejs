@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from './three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from 'dat.gui';
 import { gsap } from 'gsap';
+import { createMilkyWay } from './milkyway.js';
 
 // Configurar la escena, la cámara y el renderizador
 const scene = new THREE.Scene();
@@ -52,10 +53,11 @@ function createStars() {
     starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
 
     const stars = new THREE.Points(starGeometry, starMaterial);
-    scene.add(stars);
+    return stars;
 }
 
-createStars();
+const stars = createStars();
+scene.add(stars);
 
 // Crear un grupo para las luces de las ciudades
 const cityLightsGroup = new THREE.Group();
@@ -124,6 +126,11 @@ setTimeout(() => {
     controls.autoRotateSpeed = 0.5; // Establece la velocidad de auto-rotación
 }, 3000); // 1 second for spin + 2 seconds for zoom
 
+// Vía Láctea
+const milkyWay = createMilkyWay();
+milkyWay.visible = false; // Ocultarla inicialmente
+scene.add(milkyWay);
+
 function animate() {
     // Continuar rotando la Tierra
     earth.rotation.y += 0.001;
@@ -136,7 +143,29 @@ function animate() {
 
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
+
+        // Transición suave entre la Tierra y la Vía Láctea
+        const distance = camera.position.length();
+        const transitionPoint = 10; // Adjust based on when you want the transition to happen
+        const transitionRange = 5; // Range over which the transition occurs
+    
+        if (distance > transitionPoint) {
+            const t = Math.min((distance - transitionPoint) / transitionRange, 1);
+            earth.material.opacity = 1 - t;
+            earth.visible = earth.material.opacity > 0;
+            stars.material.opacity = 1 - t;
+            stars.visible = stars.material.opacity > 0;
+            milkyWay.visible = true;
+            milkyWay.children.forEach(child => child.material.opacity = t);
+        } else {
+            earth.visible = true;
+            earth.material.opacity = 1;
+            stars.visible = true;
+            stars.material.opacity = 1;
+            milkyWay.visible = false;
+        }
 }
+
 
 animate();
 
